@@ -36,3 +36,11 @@ Run the discovery service:
 ```bash
 python -m intrascale
 ```
+
+## Run a example
+
+Examples are stored in /examples
+
+```bash
+python -m intrascale.examples.execute_example
+```
