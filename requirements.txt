@@ -1,0 +1,8 @@
+# Core dependencies
+python-dotenv>=1.0.0
+psutil>=5.9.0  # For hardware information gathering
+
+# Development dependencies
+pytest>=7.4.0
+black>=23.7.0
+flake8>=6.1.0 
