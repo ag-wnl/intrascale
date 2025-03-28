@@ -16,10 +16,10 @@ A distributed computing framework that allows devices on the same network to poo
 cd intrascale
 ```
 
-2. Create a virtual environment (recommended):
+2. Create a virtual environment (recommended for Mac):
 
 ```bash
-python -m venv venv
+python3 -m venv venv
 source venv/bin/activate
 ```
 
@@ -34,11 +34,5 @@ pip install -r requirements.txt
 Run the discovery service:
 
 ```bash
-python -m intrascale.discovery
+python -m intrascale
 ```
-
-## Development
-
-- Run tests: `pytest`
-- Format code: `black .`
-- Lint code: `flake8`

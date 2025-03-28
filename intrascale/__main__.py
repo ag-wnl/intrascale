@@ -2,6 +2,7 @@
 Main entry point for the Intrascale application.
 """
 
+import asyncio
 import logging
 import signal
 import sys
@@ -22,7 +23,7 @@ class Intrascale:
         self.executor: Optional[TaskExecutor] = None
         self._running = False
     
-    def start(self) -> None:
+    async def start(self) -> None:
         """Start the Intrascale application."""
         self._running = True
         
@@ -38,17 +39,17 @@ class Intrascale:
         
         # Start connection manager
         self.connection_manager = ConnectionManager()
-        self.connection_manager.start_server()
+        await self.connection_manager.start_server_async()
         
         # Start resource manager
         self.resource_manager = ResourceManager(self.connection_manager)
         
         # Start task executor
         self.executor = TaskExecutor(self.connection_manager)
-        self.executor.start()
+        await self.executor.start()
         
         # Connect to discovered nodes
-        self._connect_to_discovered_nodes()
+        await self._connect_to_discovered_nodes()
         
         logger.info("Intrascale started successfully")
     
@@ -62,16 +63,16 @@ class Intrascale:
         if self.executor:
             self.executor.register_task_handler(function)
     
-    def _connect_to_discovered_nodes(self) -> None:
+    async def _connect_to_discovered_nodes(self) -> None:
         """Connect to discovered nodes."""
         if not self.discovery or not self.connection_manager:
             return
         
         for hostname, ip in self.discovery.get_nodes():
             if hostname != self.discovery.hostname:  # Don't connect to self
-                self.connection_manager.connect_to_node(hostname, ip)
+                await self.connection_manager.connect_to_node(hostname, ip)
     
-    def stop(self) -> None:
+    async def stop(self) -> None:
         """Stop the Intrascale application."""
         self._running = False
         
@@ -79,29 +80,28 @@ class Intrascale:
             self.discovery.stop()
         
         if self.connection_manager:
-            self.connection_manager.stop()
+            await self.connection_manager.stop()
         
         if self.executor:
-            self.executor.stop()
+            await self.executor.stop()
         
         logger.info("Intrascale stopped")
 
-def main():
+async def main():
     """Main entry point."""
     intrascale = Intrascale()
     
     def signal_handler(signum, frame):
         """Handle shutdown signals."""
         logger.info("Received shutdown signal")
-        intrascale.stop()
-        sys.exit(0)
+        asyncio.create_task(intrascale.stop())
     
     # Register signal handlers
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
     
     try:
-        intrascale.start()
+        await intrascale.start()
         
         # Example: Register a task
         def example_task(x: int) -> int:
@@ -111,12 +111,12 @@ def main():
         
         # Keep the main thread alive
         while intrascale._running:
-            signal.pause()
+            await asyncio.sleep(1)
             
     except Exception as e:
         logger.error(f"Error running Intrascale: {e}")
-        intrascale.stop()
+        await intrascale.stop()
         sys.exit(1)
 
 if __name__ == "__main__":
-    main() 
+    asyncio.run(main()) 
