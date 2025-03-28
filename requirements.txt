@@ -1,6 +1,7 @@
 # Core dependencies
 python-dotenv>=1.0.0
 psutil>=5.9.0  # For hardware information gathering
+rich>=13.7.0  # For beautiful CLI interface
 
 # Development dependencies
 pytest>=7.4.0

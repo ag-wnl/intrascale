@@ -11,6 +11,7 @@ from .discovery import NodeDiscovery
 from .connection import ConnectionManager
 from .resource_manager import ResourceManager
 from .executor import TaskExecutor
+from .cli import CLI
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +22,7 @@ class Intrascale:
         self.connection_manager: Optional[ConnectionManager] = None
         self.resource_manager: Optional[ResourceManager] = None
         self.executor: Optional[TaskExecutor] = None
+        self.cli: Optional[CLI] = None
         self._running = False
     
     async def start(self) -> None:
@@ -50,6 +52,8 @@ class Intrascale:
         
         # Connect to discovered nodes
         await self._connect_to_discovered_nodes()
+        self.cli = CLI()
+        self.cli.run(self.discovery, self.connection_manager, self.resource_manager)
         
         logger.info("Intrascale started successfully")
     
@@ -90,11 +94,12 @@ class Intrascale:
 async def main():
     """Main entry point."""
     intrascale = Intrascale()
+    shutdown_event = asyncio.Event()
     
     def signal_handler(signum, frame):
         """Handle shutdown signals."""
         logger.info("Received shutdown signal")
-        asyncio.create_task(intrascale.stop())
+        shutdown_event.set() 
     
     # Register signal handlers
     signal.signal(signal.SIGINT, signal_handler)
@@ -109,14 +114,15 @@ async def main():
         
         intrascale.register_task(example_task)
         
-        # Keep the main thread alive
-        while intrascale._running:
-            await asyncio.sleep(1)
+        # wait for shutdown signal
+        await shutdown_event.wait()
             
     except Exception as e:
         logger.error(f"Error running Intrascale: {e}")
+    finally:
+        # cleanup:
         await intrascale.stop()
-        sys.exit(1)
+        sys.exit(0)
 
 if __name__ == "__main__":
     asyncio.run(main()) 
